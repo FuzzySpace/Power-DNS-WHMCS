@@ -232,7 +232,7 @@ class RecordTemplates
                         ['name' => '{{ZONE}}',      'type' => 'A',     'ttl' => 3600, 'content' => '185.199.109.153'],
                         ['name' => '{{ZONE}}',      'type' => 'A',     'ttl' => 3600, 'content' => '185.199.110.153'],
                         ['name' => '{{ZONE}}',      'type' => 'A',     'ttl' => 3600, 'content' => '185.199.111.153'],
-                        ['name' => 'www.{{ZONE}}',  'type' => 'CNAME', 'ttl' => 3600, 'content' => '{{ZONE}}'],
+                        ['name' => 'www.{{ZONE}}',  'type' => 'CNAME', 'ttl' => 3600, 'content' => '{{ZONE}}.'],
                     ],
                 ];
 

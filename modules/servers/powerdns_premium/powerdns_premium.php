@@ -154,7 +154,7 @@ function _pdns_p_allowDNSSEC(array $params)
 function _pdns_p_license(array $params)
 {
     $key     = trim($params['configoption8'] ?? '');
-    $whmcsUrl = function_exists('App::getSystemUrl') ? \App::getSystemUrl() : '';
+    $whmcsUrl = method_exists('\App', 'getSystemUrl') ? \App::getSystemUrl() : '';
     return new LicenseManager($key, $whmcsUrl);
 }
 
