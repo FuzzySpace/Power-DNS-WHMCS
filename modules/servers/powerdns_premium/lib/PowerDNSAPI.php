@@ -54,6 +54,17 @@ class PowerDNSAPI
     public function createZone($zone, array $nameservers, $hostmaster = '', $kind = 'Native', array $masters = [])
     {
         $zone = $this->fqdn($zone);
+        $nameservers = array_values(array_filter(array_map(function ($ns) {
+            $ns = strtolower(trim((string) $ns));
+            if ($ns === '') {
+                return '';
+            }
+            return rtrim($ns, '.') . '.';
+        }, $nameservers)));
+
+        if (empty($nameservers)) {
+            throw new InvalidArgumentException('At least one nameserver is required.');
+        }
 
         if (empty($hostmaster)) {
             $hostmaster = 'hostmaster.' . $zone;
@@ -79,7 +90,7 @@ class PowerDNSAPI
                     'records' => [[
                         'content'  => sprintf(
                             '%s %s 1 10800 3600 604800 300',
-                            $this->fqdn($nameservers[0]),
+                            $nameservers[0],
                             $this->normalizeHostmaster($hostmaster)
                         ),
                         'disabled' => false,

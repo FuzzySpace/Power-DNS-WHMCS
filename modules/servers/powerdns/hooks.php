@@ -18,6 +18,8 @@ if (!defined('WHMCS')) {
     die('This file cannot be accessed directly');
 }
 
+use WHMCS\Database\Capsule;
+
 require_once __DIR__ . '/../../../modules/servers/powerdns/lib/PowerDNSAPI.php';
 
 add_hook('ClientAreaPage', 1, function ($vars) {

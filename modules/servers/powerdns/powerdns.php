@@ -101,12 +101,12 @@ function _powerdns_nameservers(array $params)
 {
     $ns = [];
     if (!empty($params['configoption1'])) {
-        $ns[] = trim($params['configoption1']);
+        $ns[] = rtrim(strtolower(trim($params['configoption1'])), '.') . '.';
     }
     if (!empty($params['configoption2'])) {
-        $ns[] = trim($params['configoption2']);
+        $ns[] = rtrim(strtolower(trim($params['configoption2'])), '.') . '.';
     }
-    return $ns ?: ['ns1.example.com', 'ns2.example.com'];
+    return $ns ?: ['ns1.example.com.', 'ns2.example.com.'];
 }
 
 function _powerdns_zoneName(array $params)
