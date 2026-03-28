@@ -135,10 +135,10 @@ function _pdns_p_zone(array $params)
 function _pdns_p_ns(array $params)
 {
     $ns = array_filter([
-        trim($params['configoption1'] ?? ''),
-        trim($params['configoption2'] ?? ''),
+        rtrim(strtolower(trim($params['configoption1'] ?? '')), '.') . '.',
+        rtrim(strtolower(trim($params['configoption2'] ?? '')), '.') . '.',
     ]);
-    return $ns ?: ['ns1.example.com', 'ns2.example.com'];
+    return $ns ?: ['ns1.example.com.', 'ns2.example.com.'];
 }
 
 function _pdns_p_maxRecords(array $params)
