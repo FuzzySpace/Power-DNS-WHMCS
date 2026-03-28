@@ -80,7 +80,7 @@ class PowerDNSAPI
                         'content'  => sprintf(
                             '%s %s 1 10800 3600 604800 300',
                             $this->fqdn($nameservers[0]),
-                            rtrim($hostmaster, '.')
+                            $this->normalizeHostmaster($hostmaster)
                         ),
                         'disabled' => false,
                     ]],
@@ -177,7 +177,7 @@ class PowerDNSAPI
         $content = sprintf(
             '%s %s %d %d %d %d %d',
             $this->fqdn($soa['primary_ns']),
-            rtrim($soa['hostmaster'], '.'),
+            $this->normalizeHostmaster($soa['hostmaster']),
             $soa['serial'],
             $soa['refresh'],
             $soa['retry'],
@@ -539,6 +539,16 @@ class PowerDNSAPI
     {
         $name = trim($name);
         return (substr($name, -1) === '.') ? $name : $name . '.';
+    }
+
+    private function normalizeHostmaster($hostmaster)
+    {
+        $hm = trim($hostmaster);
+        if (strpos($hm, '@') !== false) {
+            [$local, $domain] = explode('@', $hm, 2);
+            $hm = $local . '.' . $domain;
+        }
+        return rtrim($hm, '.') . '.';
     }
 
     /**
