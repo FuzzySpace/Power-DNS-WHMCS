@@ -68,7 +68,7 @@ class PowerDNSAPI
                             'content'  => sprintf(
                                 '%s %s 1 10800 3600 604800 300',
                                 $this->fqdn($nameservers[0]),
-                                $hostmaster
+                                $this->normalizeHostmaster($hostmaster)
                             ),
                             'disabled' => false,
                         ],
@@ -343,12 +343,18 @@ class PowerDNSAPI
             return $name . '.' . $zone;
         }
 
-        // Looks like a hostname without trailing dot
-        if ($zone !== null && substr($name, -(strlen($zone) - 1)) !== rtrim($zone, '.')) {
-            return $name . '.' . rtrim($zone, '.') . '.';
-        }
-
+        // Has dots – treat as an absolute hostname, just add trailing dot
         return $name . '.';
+    }
+
+    private function normalizeHostmaster($hostmaster)
+    {
+        $hm = trim($hostmaster);
+        if (strpos($hm, '@') !== false) {
+            [$local, $domain] = explode('@', $hm, 2);
+            $hm = $local . '.' . $domain;
+        }
+        return rtrim($hm, '.') . '.';
     }
 
     /**

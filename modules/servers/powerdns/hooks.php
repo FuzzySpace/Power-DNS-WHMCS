@@ -45,7 +45,7 @@ add_hook('ClientAreaPage', 1, function ($vars) {
     // Load service and verify it belongs to the logged-in client
     $service = Capsule::table('tblhosting')
         ->where('id', $serviceId)
-        ->where('userid', $_SESSION['uid'])
+        ->where('userid', (int) ($_SESSION['uid'] ?? 0))
         ->first();
 
     if (!$service) {
@@ -71,25 +71,7 @@ add_hook('ClientAreaPage', 1, function ($vars) {
         exit;
     }
 
-    // Retrieve product config options for this service
-    $configOptions = [];
-    $rows = Capsule::table('tblproductconfiglinks')
-        ->join('tblproductconfigoptions', 'tblproductconfiglinks.configid', '=', 'tblproductconfigoptions.id')
-        ->join('tblproductconfigoptionssub', function ($join) use ($serviceId) {
-            $join->on('tblproductconfigoptionssub.configid', '=', 'tblproductconfigoptions.id');
-            $join->join('tblhostingconfigoptions', function ($j) use ($serviceId) {
-                $j->on('tblhostingconfigoptions.configid', '=', 'tblproductconfigoptionssub.id');
-                $j->where('tblhostingconfigoptions.relid', '=', $serviceId);
-            });
-        })
-        ->select('tblproductconfigoptions.optionname', 'tblproductconfigoptionssub.optionname as value')
-        ->get();
-
-    foreach ($rows as $row) {
-        $configOptions[$row->optionname] = $row->value;
-    }
-
-    // Fall back to reading module config from the product
+    // Read module config options from the product
     $product = Capsule::table('tblproducts')
         ->where('id', $service->packageid)
         ->first();

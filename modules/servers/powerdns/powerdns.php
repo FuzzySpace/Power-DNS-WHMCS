@@ -228,12 +228,12 @@ function powerdns_ClientArea(array $params)
                     $type    = strtoupper(trim($_POST['record_type']));
                     $name    = trim($_POST['record_name']);
                     $ttl     = max(60, (int) ($_POST['record_ttl'] ?: $defaultTTL));
-                    $content = _powerdns_buildRecordContent($type, $_POST);
 
                     if (!in_array($type, ['A', 'AAAA', 'MX', 'TXT', 'SRV'], true)) {
                         throw new InvalidArgumentException("Unsupported record type: {$type}");
                     }
 
+                    $content = _powerdns_buildRecordContent($type, $_POST);
                     $api->addRecord($zone, $name ?: $zone, $type, $content, $ttl, true);
                     $success = "Record added successfully.";
                     break;

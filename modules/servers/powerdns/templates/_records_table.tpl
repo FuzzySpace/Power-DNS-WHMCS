@@ -55,6 +55,10 @@
       </tbody>
     </table>
   </div>
+  {* Always present in the DOM so JS can show it after the last record is deleted *}
+  <p class="text-muted" id="pdns-empty-msg" style="display:none;">
+    <em>No DNS records found for this zone. Add your first record below.</em>
+  </p>
 {else}
   <p class="text-muted" id="pdns-empty-msg">
     <em>No DNS records found for this zone. Add your first record below.</em>
