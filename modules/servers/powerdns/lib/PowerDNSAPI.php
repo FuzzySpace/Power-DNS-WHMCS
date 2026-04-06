@@ -344,6 +344,11 @@ class PowerDNSAPI
             return $name;
         }
 
+        // Zone apex shorthand
+        if ($zone !== null && ($name === '@' || $name === '')) {
+            return $zone;
+        }
+
         // Bare label (no dots) – relative to zone
         if ($zone !== null && strpos($name, '.') === false) {
             return $name . '.' . $zone;

@@ -537,13 +537,13 @@ class PowerDNSAPI
             return $name; // already FQDN
         }
 
-        // Contains dots and ends with zone (without trailing dot)
-        $zoneNoTrail = rtrim($zoneFqdn, '.');
-        if (substr($name, -(strlen($zoneNoTrail))) === $zoneNoTrail) {
-            return $name . '.';
+        // Bare label (no dots) – relative to zone
+        if (strpos($name, '.') === false) {
+            return $name . '.' . $zoneFqdn;
         }
 
-        return $name . '.' . $zoneNoTrail . '.';
+        // Has dots – treat as an absolute hostname, just add trailing dot
+        return $name . '.';
     }
 
     private function fqdn($name)
