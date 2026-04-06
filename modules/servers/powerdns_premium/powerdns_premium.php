@@ -336,11 +336,6 @@ function powerdns_premium_ClientAreaCustomButtonArray()
 
 function powerdns_premium_ClientArea(array $params)
 {
-    $zone       = _pdns_p_zone($params);
-    $serviceId  = $params['serviceid'];
-    $serviceUrl = 'clientarea.php?action=productdetails&id=' . $serviceId;
-    $manageUrl  = $serviceUrl . '&view=managedns';
-
     if ($params['status'] !== 'Active') {
         return [
             'templatefile' => 'inactive',
@@ -348,9 +343,10 @@ function powerdns_premium_ClientArea(array $params)
         ];
     }
 
-    // License check
-    $license    = _pdns_p_license($params);
-    $licensed   = $license->isValid();
+    $zone        = _pdns_p_zone($params);
+    $serviceId   = $params['serviceid'];
+    $license     = _pdns_p_license($params);
+    $licensed    = $license->isValid();
     $nameservers = _pdns_p_ns($params);
 
     $api        = _pdns_p_getClient($params);
@@ -360,40 +356,6 @@ function powerdns_premium_ClientArea(array $params)
     $userId     = $params['userid'] ?? ($_SESSION['uid'] ?? 0);
     $error      = '';
     $success    = '';
-
-    // ------------------------------------------------------------------
-    // Route: overview vs DNS manager
-    // ------------------------------------------------------------------
-    $view        = $params['customaction'] ?? ($_GET['view'] ?? '');
-    $showManager = ($view === 'managedns')
-                || !empty($_POST['pdns_goto'])
-                || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pdns_action']));
-
-    if (!$showManager) {
-        // ── Overview page ──────────────────────────────────────────────
-        $recordCount = 0;
-        $zoneError   = '';
-        try {
-            $rrs = $api->getRecords($zone, PowerDNSAPI::$SUPPORTED_TYPES);
-            foreach ($rrs as $rr) {
-                $recordCount += count(array_filter($rr['records'], fn($r) => !($r['disabled'] ?? false)));
-            }
-        } catch (Exception $e) {
-            $zoneError = $e->getMessage();
-        }
-        return [
-            'templatefile' => 'overview',
-            'vars' => [
-                'zone'        => $zone,
-                'nameservers' => $nameservers,
-                'recordCount' => $recordCount,
-                'allowDNSSEC' => $allowDNS,
-                'manageUrl'   => $manageUrl,
-                'licensed'    => $licensed,
-                'error'       => $zoneError,
-            ],
-        ];
-    }
 
     // ------------------------------------------------------------------
     // Handle POST (non-AJAX fallback)
@@ -523,7 +485,6 @@ function powerdns_premium_ClientArea(array $params)
             'quotaReached'  => $quotaReached,
             'defaultTTL'    => $defaultTTL,
             'serviceId'     => $serviceId,
-            'serviceUrl'    => $serviceUrl,
             'nameservers'   => $nameservers,
             'allowDNSSEC'   => $allowDNS,
             'dnssecEnabled' => $dnssecEnabled,

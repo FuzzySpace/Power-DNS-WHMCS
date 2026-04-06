@@ -3,12 +3,24 @@
   Tabs: DNS Records | DNSSEC | Propagation | History | Import/Export
 *}
 
-{* Back to zone overview *}
-<p style="margin-bottom:16px;">
-  <a href="{$serviceUrl|escape}" class="btn btn-default btn-sm">
-    <i class="fa fa-arrow-left"></i> Back to Zone Overview
-  </a>
-</p>
+{* ── Zone / Nameserver info ─────────────────────────────────────────────── *}
+<div class="panel panel-info" style="margin-bottom:16px;">
+  <div class="panel-heading">
+    <h4 class="panel-title">
+      <i class="fa fa-globe"></i> {$zone|escape}
+      &nbsp;<span class="label label-success" style="font-size:11px;">Active</span>
+    </h4>
+  </div>
+  <div class="panel-body">
+    <p class="text-muted" style="margin-bottom:10px;">
+      Point your domain to these nameservers at your registrar.
+      DNS changes can take up to 24&nbsp;hours to propagate.
+    </p>
+    {foreach from=$nameservers item=ns}
+      <code style="margin-right:16px;">{$ns|escape}</code>
+    {/foreach}
+  </div>
+</div>
 
 {if !$licensed}
   <div class="alert alert-warning">

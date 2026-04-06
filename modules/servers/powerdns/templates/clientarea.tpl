@@ -1,65 +1,70 @@
-{* PowerDNS Client Area – DNS Record Manager
+{* PowerDNS Client Area – DNS Manager
+   Shows nameserver info and the record manager on a single page.
    Supports AJAX (no page reload) with plain form-submit fallback.
 *}
 
 <div class="powerdns-manager" id="pdns-manager">
 
-  {* Breadcrumb / back navigation *}
-  <p style="margin-bottom:16px;">
-    <a href="{$serviceUrl|escape}" class="btn btn-default btn-sm">
-      <i class="fa fa-arrow-left"></i> Back to Zone Overview
-    </a>
-  </p>
+  {* ── Nameserver info ─────────────────────────────────────────────────── *}
+  <div class="panel panel-info">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <i class="fa fa-globe"></i> {$zone|escape}
+        &nbsp;<span class="label label-success" style="font-size:11px;">Active</span>
+      </h4>
+    </div>
+    <div class="panel-body">
+      <p class="text-muted" style="margin-bottom:10px;">
+        Point your domain to these nameservers at your registrar.
+        DNS changes can take up to 24&nbsp;hours to propagate.
+      </p>
+      {foreach from=$nameservers item=ns}
+        <code style="margin-right:16px;">{$ns|escape}</code>
+      {/foreach}
+    </div>
+  </div>
 
+  {* ── DNS Records panel ───────────────────────────────────────────────── *}
   <div class="panel panel-default">
     <div class="panel-heading">
       <h3 class="panel-title">
-        <i class="fa fa-list-ul"></i> DNS Records &mdash; <strong>{$zone|escape}</strong>
+        <i class="fa fa-list-ul"></i> DNS Records
       </h3>
     </div>
 
     <div class="panel-body">
 
-      {* ------------------------------------------------------------------ *}
-      {* Server-side alerts (shown on hard page load fallback)              *}
-      {* ------------------------------------------------------------------ *}
+      {* Server-side alerts (non-AJAX fallback) *}
       {if $error}
-        <div class="alert alert-danger alert-dismissible" role="alert" id="pdns-alert-error">
+        <div class="alert alert-danger alert-dismissible" role="alert">
           <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
           <i class="fa fa-exclamation-circle"></i> {$error|escape}
         </div>
       {/if}
       {if $success}
-        <div class="alert alert-success alert-dismissible" role="alert" id="pdns-alert-success">
+        <div class="alert alert-success alert-dismissible" role="alert">
           <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
           <i class="fa fa-check-circle"></i> {$success|escape}
         </div>
       {/if}
 
-      {* AJAX dynamic alert target *}
+      {* AJAX alert target *}
       <div id="pdns-alert" style="display:none;"></div>
 
-      {* ------------------------------------------------------------------ *}
-      {* Current records table                                               *}
-      {* ------------------------------------------------------------------ *}
-      <h4>Current DNS Records</h4>
-
+      {* ── Records table ──────────────────────────────────────────────── *}
       <div id="pdns-records-wrapper">
         {include file="modules/servers/powerdns/templates/_records_table.tpl" records=$records}
       </div>
 
       <hr>
 
-      {* ------------------------------------------------------------------ *}
-      {* Add record form                                                     *}
-      {* ------------------------------------------------------------------ *}
+      {* ── Add record form ────────────────────────────────────────────── *}
       <h4>Add DNS Record</h4>
       <form method="post" action="" id="pdns-add-form" novalidate>
         {csrf_token}
         <input type="hidden" name="powerdns_action" value="add_record">
         <input type="hidden" name="service_id"      value="{$serviceId|escape}">
-        {* powerdns_ajax is added dynamically by JS so plain form-submit falls through *}
-        {* to ClientArea() for a proper page reload rather than seeing raw JSON.        *}
+        {* powerdns_ajax is appended by JS only – plain submit falls through to ClientArea() *}
 
         <div class="form-group">
           <label for="record_type">Record Type</label>
@@ -84,7 +89,7 @@
               </div>
               <span class="help-block">
                 Leave blank or use <code>@</code> for the zone apex.
-                Use a bare label (e.g. <code>www</code>) for a subdomain.
+                Use a bare label (e.g.&nbsp;<code>www</code>) for a subdomain.
               </span>
             </div>
           </div>
@@ -188,9 +193,6 @@
 
 </div>{* /powerdns-manager *}
 
-{* ------------------------------------------------------------------ *}
-{* Styles                                                              *}
-{* ------------------------------------------------------------------ *}
 <style>
   .powerdns-manager .pdns-content-wrap { word-break:break-all; }
   .powerdns-manager .pdns-zone-label   { font-size:12px; color:#777; }
@@ -198,9 +200,6 @@
   .powerdns-manager .pdns-delete-btn   { white-space:nowrap; }
 </style>
 
-{* ------------------------------------------------------------------ *}
-{* JavaScript – progressive enhancement: AJAX if fetch available      *}
-{* ------------------------------------------------------------------ *}
 <script>
 (function () {
   "use strict";
@@ -216,7 +215,6 @@
     var el = document.getElementById("fields-" + target);
     if (el) { el.style.display = ""; }
 
-    /* Update A-field placeholder */
     var ipInput = document.querySelector(".pdns-a-value");
     if (ipInput) {
       ipInput.placeholder = (type === "AAAA")
@@ -224,7 +222,7 @@
         : "93.184.216.34";
     }
   }
-  window.pdnsShowFields = pdnsShowFields; // expose for inline onchange
+  window.pdnsShowFields = pdnsShowFields;
 
   /* ---------------------------------------------------------------- */
   /* Alert helper                                                      */
@@ -245,13 +243,16 @@
   }
 
   /* ---------------------------------------------------------------- */
-  /* Render a single record row                                        */
+  /* Record type badge colour                                          */
   /* ---------------------------------------------------------------- */
   function pdnsBadgeClass(type) {
     var map = {A:'primary', AAAA:'info', MX:'warning', TXT:'default', SRV:'danger'};
     return map[type] || 'default';
   }
 
+  /* ---------------------------------------------------------------- */
+  /* Render a single record row                                        */
+  /* ---------------------------------------------------------------- */
   function pdnsRenderRow(rec) {
     var tr = document.createElement('tr');
     tr.innerHTML =
@@ -271,21 +272,18 @@
   }
 
   /* ---------------------------------------------------------------- */
-  /* Refresh the records table via AJAX                               */
+  /* Refresh table after add                                           */
   /* ---------------------------------------------------------------- */
   function pdnsRefreshTable(newRecord) {
     var tbody = document.querySelector('#pdns-records-wrapper tbody');
     if (!tbody) return;
 
     if (newRecord) {
-      // Append new row immediately (optimistic UI)
       tbody.appendChild(pdnsRenderRow(newRecord));
 
-      // Hide empty-state message if present
       var empty = document.getElementById('pdns-empty-msg');
       if (empty) { empty.style.display = 'none'; }
 
-      // Ensure table is visible
       var tbl = tbody.closest('table');
       if (tbl) { tbl.style.display = ''; }
     }
@@ -299,7 +297,6 @@
     addForm.addEventListener('submit', function (e) {
       e.preventDefault();
 
-      /* Client-side validation */
       var type = document.getElementById('record_type').value;
       if (type === 'SRV') {
         var port = addForm.querySelector('[name="srv_port"]').value;
@@ -319,11 +316,11 @@
 
       var btn     = document.getElementById('pdns-add-btn');
       var spinner = document.getElementById('pdns-add-spinner');
-      btn.disabled  = true;
+      btn.disabled       = true;
       spinner.style.display = '';
 
       var fd = new FormData(addForm);
-      fd.append('powerdns_ajax', '1'); // flag the request as AJAX (not in static HTML)
+      fd.append('powerdns_ajax', '1');
 
       fetch(window.location.href, {
         method:      'POST',
@@ -332,20 +329,20 @@
       })
       .then(function (r) { return r.json(); })
       .then(function (data) {
-        btn.disabled  = false;
+        btn.disabled       = false;
         spinner.style.display = 'none';
 
         if (data.success) {
           pdnsAlert('success', 'Record added successfully.');
           pdnsRefreshTable(data.record);
           addForm.reset();
-          pdnsShowFields('A'); // reset to first tab
+          pdnsShowFields('A');
         } else {
           pdnsAlert('danger', data.error || 'An unknown error occurred.');
         }
       })
       .catch(function (err) {
-        btn.disabled  = false;
+        btn.disabled       = false;
         spinner.style.display = 'none';
         pdnsAlert('danger', 'Request failed: ' + err.message);
       });
@@ -368,9 +365,8 @@
       var content = btn.getAttribute('data-content');
       var row     = btn.closest('tr');
 
-      /* Find the CSRF token from the add-form */
       var tokenInput = document.querySelector('#pdns-add-form [name="token"]')
-                    || document.querySelector('#pdns-add-form input[type="hidden"][name!="powerdns_action"][name!="powerdns_ajax"][name!="service_id"]');
+                    || document.querySelector('#pdns-add-form input[type="hidden"]:not([name="powerdns_action"]):not([name="service_id"])');
       var token = tokenInput ? tokenInput.value : '';
 
       var serviceId = document.querySelector('[name="service_id"]').value;
@@ -384,7 +380,7 @@
       fd.append('record_name',      name);
       fd.append('record_content',   content);
 
-      btn.disabled = true;
+      btn.disabled  = true;
       btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i>';
 
       fetch(window.location.href, {
@@ -398,7 +394,6 @@
           if (row) { row.remove(); }
           pdnsAlert('success', 'Record deleted successfully.');
 
-          /* Show empty message if table is now empty */
           var remaining = document.querySelectorAll('#pdns-records-wrapper tbody tr');
           if (remaining.length === 0) {
             var empty = document.getElementById('pdns-empty-msg');
@@ -417,11 +412,6 @@
       });
     });
   }
-
-  /* ---------------------------------------------------------------- */
-  /* Fallback: plain form submit for non-AJAX delete buttons          */
-  /* (rendered by the server-side partial when JS is not available)   */
-  /* ---------------------------------------------------------------- */
 
 }());
 </script>
