@@ -3,6 +3,13 @@
   Tabs: DNS Records | DNSSEC | Propagation | History | Import/Export
 *}
 
+{* Back to zone overview *}
+<p style="margin-bottom:16px;">
+  <a href="{$serviceUrl|escape}" class="btn btn-default btn-sm">
+    <i class="fa fa-arrow-left"></i> Back to Zone Overview
+  </a>
+</p>
+
 {if !$licensed}
   <div class="alert alert-warning">
     <i class="fa fa-exclamation-triangle"></i>
@@ -10,23 +17,6 @@
     Record management is currently disabled. Please contact support.
   </div>
 {/if}
-
-{* ── Nameserver callout ──────────────────────────────────────────────────── *}
-<div class="panel panel-info pdns-ns-callout">
-  <div class="panel-heading">
-    <i class="fa fa-server"></i> Point your domain to these nameservers
-  </div>
-  <div class="panel-body">
-    {foreach from=$nameservers item=ns}
-      <div class="pdns-ns-row">
-        <code id="ns-{$ns@index}">{$ns|escape}</code>
-        <button class="btn btn-xs btn-default pdns-copy-btn" data-target="ns-{$ns@index}">
-          <i class="fa fa-copy"></i> Copy
-        </button>
-      </div>
-    {/foreach}
-  </div>
-</div>
 
 {* ── Alert area ─────────────────────────────────────────────────────────── *}
 {if $error}

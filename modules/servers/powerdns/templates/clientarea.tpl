@@ -1,35 +1,20 @@
-{* PowerDNS Client Area DNS Manager Template *}
-{* Supports both plain-HTML form submit (fallback) and AJAX (no page reload). *}
+{* PowerDNS Client Area – DNS Record Manager
+   Supports AJAX (no page reload) with plain form-submit fallback.
+*}
 
 <div class="powerdns-manager" id="pdns-manager">
 
-  {* ------------------------------------------------------------------ *}
-  {* Nameserver callout – shown so the client knows where to point      *}
-  {* their domain delegation                                             *}
-  {* ------------------------------------------------------------------ *}
-  {if $nameservers}
-  <div class="panel panel-info pdns-ns-callout">
-    <div class="panel-heading">
-      <i class="fa fa-server"></i> <strong>Point your domain to these nameservers</strong>
-    </div>
-    <div class="panel-body">
-      {foreach from=$nameservers item=ns name=ns_loop}
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:{if $ns_loop.last}0{else}6px{/if};">
-        <code id="pdns-ns-{$ns_loop.index}">{$ns|escape}</code>
-        <button type="button" class="btn btn-xs btn-default pdns-copy-btn"
-                data-target="pdns-ns-{$ns_loop.index}">
-          <i class="fa fa-copy"></i> Copy
-        </button>
-      </div>
-      {/foreach}
-    </div>
-  </div>
-  {/if}
+  {* Breadcrumb / back navigation *}
+  <p style="margin-bottom:16px;">
+    <a href="{$serviceUrl|escape}" class="btn btn-default btn-sm">
+      <i class="fa fa-arrow-left"></i> Back to Zone Overview
+    </a>
+  </p>
 
   <div class="panel panel-default">
     <div class="panel-heading">
       <h3 class="panel-title">
-        <i class="fa fa-globe"></i> DNS Manager &mdash; <strong>{$zone|escape}</strong>
+        <i class="fa fa-list-ul"></i> DNS Records &mdash; <strong>{$zone|escape}</strong>
       </h3>
     </div>
 
@@ -219,22 +204,6 @@
 <script>
 (function () {
   "use strict";
-
-  /* ---------------------------------------------------------------- */
-  /* Copy-to-clipboard for nameserver buttons                         */
-  /* ---------------------------------------------------------------- */
-  document.querySelectorAll('.pdns-copy-btn').forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      var id   = btn.getAttribute('data-target');
-      var text = document.getElementById(id) ? document.getElementById(id).innerText : '';
-      if (navigator.clipboard && text) {
-        navigator.clipboard.writeText(text).then(function () {
-          btn.innerHTML = '<i class="fa fa-check"></i> Copied!';
-          setTimeout(function () { btn.innerHTML = '<i class="fa fa-copy"></i> Copy'; }, 2000);
-        });
-      }
-    });
-  });
 
   /* ---------------------------------------------------------------- */
   /* Record type field toggling                                        */

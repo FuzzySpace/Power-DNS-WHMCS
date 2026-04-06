@@ -213,16 +213,29 @@ function powerdns_TerminateAccount(array $params)
 // ---------------------------------------------------------------------------
 
 /**
+ * Adds "Manage DNS Records" to the service actions panel in the WHMCS
+ * client area.  Clicking the button calls ClientArea() with
+ * $params['customaction'] = 'managedns'.
+ */
+function powerdns_ClientAreaCustomButtonArray()
+{
+    return [
+        'Manage DNS Records' => 'managedns',
+    ];
+}
+
+/**
  * Return the template and variables for the client-facing DNS manager.
  */
 function powerdns_ClientArea(array $params)
 {
-    $api         = _powerdns_getClient($params);
-    $zone        = _powerdns_zoneName($params);
-    $defaultTTL  = (int) ($params['configoption4'] ?: 300);
-    $serviceId   = $params['serviceid'];
-    $error       = '';
-    $success     = '';
+    $zone       = _powerdns_zoneName($params);
+    $serviceId  = $params['serviceid'];
+    $serviceUrl = 'clientarea.php?action=productdetails&id=' . $serviceId;
+    $manageUrl  = $serviceUrl . '&view=managedns';
+    $error      = '';
+    $success    = '';
+    $nameservers = _powerdns_nameservers($params);
 
     // Guard: only active services may use the manager
     if ($params['status'] !== 'Active') {
@@ -233,38 +246,68 @@ function powerdns_ClientArea(array $params)
     }
 
     // -------------------------------------------------------------------
-    // Handle form submissions (POST actions)
+    // Route: overview vs DNS manager
+    // Triggered by either the WHMCS custom button (customaction) or a
+    // plain GET parameter so the "Manage DNS Records" link on the
+    // overview page can use a simple anchor.
     // -------------------------------------------------------------------
+    $view = $params['customaction'] ?? ($_GET['view'] ?? '');
+    $showManager = ($view === 'managedns')
+                || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['powerdns_action']));
+
+    if (!$showManager) {
+        // ── Overview page ──────────────────────────────────────────────
+        $recordCount = 0;
+        $zoneError   = '';
+        try {
+            $api         = _powerdns_getClient($params);
+            $defaultTTL  = (int) ($params['configoption4'] ?: 300);
+            $records     = $api->getRecords($zone, ['A', 'AAAA', 'MX', 'TXT', 'SRV']);
+            foreach ($records as $rr) {
+                $recordCount += count(array_filter($rr['records'], fn($r) => !$r['disabled']));
+            }
+        } catch (Exception $e) {
+            $zoneError = $e->getMessage();
+        }
+        return [
+            'templatefile' => 'overview',
+            'vars' => [
+                'zone'        => $zone,
+                'nameservers' => $nameservers,
+                'recordCount' => $recordCount,
+                'manageUrl'   => $manageUrl,
+                'error'       => $zoneError,
+            ],
+        ];
+    }
+
+    // ── DNS Manager page ───────────────────────────────────────────────
+    $api        = _powerdns_getClient($params);
+    $defaultTTL = (int) ($params['configoption4'] ?: 300);
+
+    // Handle form submissions (non-AJAX fallback)
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['powerdns_action'])) {
-
-        // CSRF: WHMCS injects a token; validate it
         check_token('WHMCS.clientarea');
-
         $action = $_POST['powerdns_action'];
-
         try {
             switch ($action) {
-
                 case 'add_record':
                     $type    = strtoupper(trim($_POST['record_type']));
                     $name    = trim($_POST['record_name']);
                     $ttl     = max(60, (int) ($_POST['record_ttl'] ?: $defaultTTL));
-
                     if (!in_array($type, ['A', 'AAAA', 'MX', 'TXT', 'SRV'], true)) {
                         throw new InvalidArgumentException("Unsupported record type: {$type}");
                     }
-
                     $content = _powerdns_buildRecordContent($type, $_POST);
                     $api->addRecord($zone, $name ?: $zone, $type, $content, $ttl, true);
-                    $success = "Record added successfully.";
+                    $success = 'Record added successfully.';
                     break;
-
                 case 'delete_record':
                     $type    = strtoupper(trim($_POST['record_type']));
                     $name    = trim($_POST['record_name']);
                     $content = trim($_POST['record_content']);
                     $api->deleteRecord($zone, $name, $type, $content);
-                    $success = "Record deleted successfully.";
+                    $success = 'Record deleted successfully.';
                     break;
             }
         } catch (Exception $e) {
@@ -272,40 +315,34 @@ function powerdns_ClientArea(array $params)
         }
     }
 
-    // -------------------------------------------------------------------
-    // Fetch current records to display
-    // -------------------------------------------------------------------
-    $records = [];
+    // Fetch records for display
+    $flatRecords = [];
     try {
         $records = $api->getRecords($zone, ['A', 'AAAA', 'MX', 'TXT', 'SRV']);
+        foreach ($records as $rrset) {
+            foreach ($rrset['records'] as $record) {
+                if ($record['disabled']) continue;
+                $flatRecords[] = [
+                    'name'    => $rrset['name'],
+                    'type'    => $rrset['type'],
+                    'ttl'     => $rrset['ttl'],
+                    'content' => $record['content'],
+                ];
+            }
+        }
     } catch (Exception $e) {
         $error = $error ?: 'Unable to load DNS records: ' . $e->getMessage();
     }
 
-    // Flatten RRsets into individual record rows for easy templating
-    $flatRecords = [];
-    foreach ($records as $rrset) {
-        foreach ($rrset['records'] as $record) {
-            if ($record['disabled']) {
-                continue; // don't show disabled (suspended) records
-            }
-            $flatRecords[] = [
-                'name'    => $rrset['name'],
-                'type'    => $rrset['type'],
-                'ttl'     => $rrset['ttl'],
-                'content' => $record['content'],
-            ];
-        }
-    }
-
     return [
         'templatefile' => 'clientarea',
-        'vars'         => [
+        'vars' => [
             'zone'        => $zone,
-            'nameservers' => _powerdns_nameservers($params),
+            'nameservers' => $nameservers,
             'records'     => $flatRecords,
             'defaultTTL'  => $defaultTTL,
             'serviceId'   => $serviceId,
+            'serviceUrl'  => $serviceUrl,
             'error'       => $error,
             'success'     => $success,
         ],
