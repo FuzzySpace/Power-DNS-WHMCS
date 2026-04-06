@@ -365,6 +365,7 @@ function powerdns_premium_ClientArea(array $params)
     // Route: overview vs manager
     $view        = $_GET['view'] ?? ($params['customaction'] ?? '');
     $showManager = ($view === 'managedns')
+                || (($_POST['pdns_goto'] ?? '') === 'managedns')
                 || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pdns_action']));
 
     if (!$showManager) {
@@ -557,11 +558,36 @@ function powerdns_premium_ClientArea(array $params)
 
 function powerdns_premium_AdminArea(array $params)
 {
+    $zone    = _pdns_p_zone($params);
+    $records = [];
+    $error   = '';
+
+    try {
+        $rrsets = _pdns_p_getClient($params)->getRecords($zone, PowerDNSAPI::$SUPPORTED_TYPES);
+        foreach ($rrsets as $rrset) {
+            foreach (($rrset['records'] ?? []) as $rec) {
+                if ($rec['disabled'] ?? false) {
+                    continue;
+                }
+                $records[] = [
+                    'name'    => $rrset['name'],
+                    'type'    => $rrset['type'],
+                    'ttl'     => $rrset['ttl'],
+                    'content' => $rec['content'],
+                ];
+            }
+        }
+    } catch (Exception $e) {
+        $error = $e->getMessage();
+    }
+
     return [
         'templatefile' => 'admin_records',
         'vars' => [
-            'zone'      => _pdns_p_zone($params),
+            'zone'      => $zone,
             'serviceId' => $params['serviceid'],
+            'records'   => $records,
+            'error'     => $error,
         ],
     ];
 }

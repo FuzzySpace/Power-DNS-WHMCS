@@ -99,7 +99,8 @@ add_hook('ClientAreaPage', 1, function ($vars) {
     // Build API client
     $scheme   = $server->secure ? 'https' : 'http';
     $port     = $server->port ?: 8081;
-    $baseUrl  = "{$scheme}://{$server->hostname}:{$port}";
+    $host     = trim((string) ($server->hostname ?: $server->ipaddress));
+    $baseUrl  = "{$scheme}://{$host}:{$port}";
     $serverId = trim($moduleConfig['configoption5'] ?? 'localhost');
 
     // Decrypt server password (WHMCS uses AES encryption)
