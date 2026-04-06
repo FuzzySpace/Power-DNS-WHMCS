@@ -214,14 +214,23 @@ function powerdns_TerminateAccount(array $params)
 
 /**
  * Adds "Manage DNS Records" to the service actions sidebar in the WHMCS
- * client area.  Clicking it calls ClientArea() — we always render the
- * full manager so no routing is required.
+ * client area.  Clicking it calls powerdns_managedns() then ClientArea().
  */
 function powerdns_ClientAreaCustomButtonArray()
 {
     return [
         'Manage DNS Records' => 'managedns',
     ];
+}
+
+/**
+ * Handler for the "Manage DNS Records" custom button click.
+ * WHMCS requires this function to exist (named <module>_<action>).
+ * After it returns, WHMCS calls ClientArea() which renders the page.
+ */
+function powerdns_managedns(array $params)
+{
+    return ['success' => true];
 }
 
 /**
