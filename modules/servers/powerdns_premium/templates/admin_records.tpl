@@ -6,25 +6,43 @@
   <h2><i class="fa fa-globe"></i> PowerDNS Premium &mdash; Zone: <strong>{$zone|escape}</strong></h2>
   <p class="text-muted">Service ID: {$serviceId|escape}</p>
 
-  <div id="pdns-admin-alert" style="display:none;"></div>
+  {if $error}
+    <div class="alert alert-danger">
+      <i class="fa fa-exclamation-circle"></i> {$error|escape}
+    </div>
+  {/if}
 
-  <div class="row">
-    <div class="col-sm-12">
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <strong>DNS Records</strong>
-          <span class="pull-right">
-            <a href="javascript:void(0)" id="pdns-admin-refresh" class="btn btn-xs btn-default">
-              <i class="fa fa-refresh"></i> Refresh
-            </a>
-          </span>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <strong>DNS Records</strong>
+    </div>
+    <div class="panel-body">
+      {if $records}
+        <div class="table-responsive">
+          <table class="table table-striped table-condensed">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>TTL</th>
+                <th>Content</th>
+              </tr>
+            </thead>
+            <tbody>
+              {foreach from=$records item=rec}
+                <tr>
+                  <td><code>{$rec.name|escape}</code></td>
+                  <td>{$rec.type|escape}</td>
+                  <td>{$rec.ttl|escape}</td>
+                  <td><code>{$rec.content|escape}</code></td>
+                </tr>
+              {/foreach}
+            </tbody>
+          </table>
         </div>
-        <div class="panel-body">
-          <div id="pdns-admin-records">
-            <p class="text-muted"><i class="fa fa-spinner fa-spin"></i> Loading records&hellip;</p>
-          </div>
-        </div>
-      </div>
+      {else}
+        <p class="text-muted"><em>No active DNS records found for this zone.</em></p>
+      {/if}
     </div>
   </div>
 </div>

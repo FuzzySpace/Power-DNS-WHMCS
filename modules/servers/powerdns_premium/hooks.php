@@ -297,7 +297,8 @@ function _pdns_p_buildApiFromService($service)
 
         $scheme   = $server->secure ? 'https' : 'http';
         $port     = $server->port ?: 8081;
-        $baseUrl  = "{$scheme}://{$server->hostname}:{$port}";
+        $host     = trim((string) ($server->hostname ?: $server->ipaddress));
+        $baseUrl  = "{$scheme}://{$host}:{$port}";
         $serverId = trim($cfg['configoption5'] ?? 'localhost');
 
         // Decrypt API key
