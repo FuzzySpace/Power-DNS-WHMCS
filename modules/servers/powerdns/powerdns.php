@@ -112,7 +112,24 @@ function _powerdns_nameservers(array $params)
 function _powerdns_zoneName(array $params)
 {
     // WHMCS stores the domain (e.g. "customer.com") in $params['domain']
-    return strtolower(trim($params['domain']));
+    return _powerdns_toAsciiDomain($params['domain']);
+}
+
+/**
+ * Normalize a domain name: lowercase, trim, and convert to punycode (ACE)
+ * so that IDN domains like münchen.de become xn--mnchen-3ya.de before being
+ * sent to PowerDNS.  Falls back to plain strtolower when intl is unavailable.
+ */
+function _powerdns_toAsciiDomain($domain)
+{
+    $domain = strtolower(trim($domain));
+    if (extension_loaded('intl') && function_exists('idn_to_ascii')) {
+        $ascii = idn_to_ascii($domain, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+        if ($ascii !== false) {
+            return $ascii;
+        }
+    }
+    return $domain;
 }
 
 // ---------------------------------------------------------------------------
@@ -138,6 +155,7 @@ function powerdns_CreateAccount(array $params)
         $api->createZone($zone, $nameservers, $hostmaster);
         return 'success';
     } catch (Exception $e) {
+        logActivity('PowerDNS module error [' . $params['domain'] . ']: ' . $e->getMessage());
         return 'Error: ' . $e->getMessage();
     }
 }
@@ -153,6 +171,7 @@ function powerdns_SuspendAccount(array $params)
         $api->disableZoneRecords($zone);
         return 'success';
     } catch (Exception $e) {
+        logActivity('PowerDNS module error [' . $params['domain'] . ']: ' . $e->getMessage());
         return 'Error: ' . $e->getMessage();
     }
 }
@@ -168,6 +187,7 @@ function powerdns_UnsuspendAccount(array $params)
         $api->enableZoneRecords($zone);
         return 'success';
     } catch (Exception $e) {
+        logActivity('PowerDNS module error [' . $params['domain'] . ']: ' . $e->getMessage());
         return 'Error: ' . $e->getMessage();
     }
 }
@@ -183,6 +203,7 @@ function powerdns_TerminateAccount(array $params)
         $api->deleteZone($zone);
         return 'success';
     } catch (Exception $e) {
+        logActivity('PowerDNS module error [' . $params['domain'] . ']: ' . $e->getMessage());
         return 'Error: ' . $e->getMessage();
     }
 }

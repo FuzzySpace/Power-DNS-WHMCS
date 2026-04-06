@@ -74,7 +74,11 @@ add_hook('ClientAreaPage', 1, function ($vars) {
     }
 
     [$api, $moduleConfig] = $apiClient;
-    $zone       = strtolower(trim($service->domain));
+    // Normalize zone name; convert IDN to punycode when intl is available
+    $zonePlain  = strtolower(trim($service->domain));
+    $zone       = (extension_loaded('intl') && function_exists('idn_to_ascii'))
+        ? (idn_to_ascii($zonePlain, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46) ?: $zonePlain)
+        : $zonePlain;
     $defaultTTL = (int) ($moduleConfig['configoption4'] ?? 300);
     $maxRecords = (int) ($moduleConfig['configoption6'] ?? 0);
     $allowDNSSEC = !empty($moduleConfig['configoption7']);
@@ -229,6 +233,7 @@ add_hook('ClientAreaPage', 1, function ($vars) {
                 echo json_encode(['success' => false, 'error' => 'Unknown action.']);
         }
     } catch (Exception $e) {
+        logActivity('PowerDNS Premium AJAX error [' . $action . '] zone=' . $zone . ': ' . $e->getMessage());
         echo json_encode(['success' => false, 'error' => $e->getMessage()]);
     }
 

@@ -129,7 +129,24 @@ function _pdns_p_getClient(array $params)
 
 function _pdns_p_zone(array $params)
 {
-    return strtolower(trim($params['domain']));
+    return _pdns_p_toAsciiDomain($params['domain']);
+}
+
+/**
+ * Normalize a domain name: lowercase, trim, and convert to punycode (ACE)
+ * so that IDN domains like münchen.de become xn--mnchen-3ya.de.
+ * Falls back to plain strtolower when the intl extension is unavailable.
+ */
+function _pdns_p_toAsciiDomain($domain)
+{
+    $domain = strtolower(trim($domain));
+    if (extension_loaded('intl') && function_exists('idn_to_ascii')) {
+        $ascii = idn_to_ascii($domain, IDNA_DEFAULT, INTL_IDNA_VARIANT_UTS46);
+        if ($ascii !== false) {
+            return $ascii;
+        }
+    }
+    return $domain;
 }
 
 function _pdns_p_ns(array $params)
@@ -264,6 +281,7 @@ function powerdns_premium_CreateAccount(array $params)
 
         return 'success';
     } catch (Exception $e) {
+        logActivity('PowerDNS Premium module error [' . $params['domain'] . ']: ' . $e->getMessage());
         return 'Error: ' . $e->getMessage();
     }
 }
@@ -274,6 +292,7 @@ function powerdns_premium_SuspendAccount(array $params)
         _pdns_p_getClient($params)->disableZoneRecords(_pdns_p_zone($params));
         return 'success';
     } catch (Exception $e) {
+        logActivity('PowerDNS Premium module error [' . $params['domain'] . ']: ' . $e->getMessage());
         return 'Error: ' . $e->getMessage();
     }
 }
@@ -284,6 +303,7 @@ function powerdns_premium_UnsuspendAccount(array $params)
         _pdns_p_getClient($params)->enableZoneRecords(_pdns_p_zone($params));
         return 'success';
     } catch (Exception $e) {
+        logActivity('PowerDNS Premium module error [' . $params['domain'] . ']: ' . $e->getMessage());
         return 'Error: ' . $e->getMessage();
     }
 }
@@ -294,6 +314,7 @@ function powerdns_premium_TerminateAccount(array $params)
         _pdns_p_getClient($params)->deleteZone(_pdns_p_zone($params));
         return 'success';
     } catch (Exception $e) {
+        logActivity('PowerDNS Premium module error [' . $params['domain'] . ']: ' . $e->getMessage());
         return 'Error: ' . $e->getMessage();
     }
 }
