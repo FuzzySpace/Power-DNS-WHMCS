@@ -340,7 +340,7 @@ function powerdns_premium_ClientAreaCustomButtonArray()
  */
 function powerdns_premium_managedns(array $params)
 {
-    return ['success' => true];
+    // No-op: WHMCS calls ClientArea() after this.
 }
 
 function powerdns_premium_ClientArea(array $params)
@@ -506,6 +506,7 @@ function powerdns_premium_ClientArea(array $params)
             'licensed'      => $licensed,
             'error'         => $error,
             'success'       => $success,
+            'tplDir'        => __DIR__ . '/templates/',
         ],
     ];
 }

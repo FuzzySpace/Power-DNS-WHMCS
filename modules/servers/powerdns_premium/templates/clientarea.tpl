@@ -81,7 +81,7 @@
     </h4>
 
     <div id="pdns-records-wrapper">
-      {include file="modules/servers/powerdns_premium/templates/partials/_records_table.tpl"}
+      {include file="`$tplDir`partials/_records_table.tpl"}
     </div>
 
     <hr>
@@ -89,7 +89,7 @@
     {* Add record form *}
     {if $licensed && !$quotaReached}
       <h4>Add Record</h4>
-      {include file="modules/servers/powerdns_premium/templates/partials/_add_form.tpl"}
+      {include file="`$tplDir`partials/_add_form.tpl"}
     {elseif $quotaReached}
       <div class="alert alert-warning">
         <i class="fa fa-ban"></i> Record quota reached ({$maxRecords} records). Delete existing records to add new ones.
@@ -100,7 +100,7 @@
 
     {* Quick templates *}
     <h4>Quick-Apply Template</h4>
-    {include file="modules/servers/powerdns_premium/templates/partials/_templates.tpl"}
+    {include file="`$tplDir`partials/_templates.tpl"}
 
   </div>{* /tab-records *}
 
@@ -109,7 +109,7 @@
   {* ═══════════════════════════════════════════════════════════════════════ *}
   {if $allowDNSSEC}
   <div class="tab-pane" id="tab-dnssec">
-    {include file="modules/servers/powerdns_premium/templates/partials/_dnssec.tpl"}
+    {include file="`$tplDir`partials/_dnssec.tpl"}
   </div>
   {/if}
 
@@ -117,21 +117,21 @@
   {* TAB 3 – Propagation                                                    *}
   {* ═══════════════════════════════════════════════════════════════════════ *}
   <div class="tab-pane" id="tab-propagation">
-    {include file="modules/servers/powerdns_premium/templates/partials/_propagation.tpl"}
+    {include file="`$tplDir`partials/_propagation.tpl"}
   </div>
 
   {* ═══════════════════════════════════════════════════════════════════════ *}
   {* TAB 4 – History                                                        *}
   {* ═══════════════════════════════════════════════════════════════════════ *}
   <div class="tab-pane" id="tab-history">
-    {include file="modules/servers/powerdns_premium/templates/partials/_history.tpl"}
+    {include file="`$tplDir`partials/_history.tpl"}
   </div>
 
   {* ═══════════════════════════════════════════════════════════════════════ *}
   {* TAB 5 – Import / Export                                                *}
   {* ═══════════════════════════════════════════════════════════════════════ *}
   <div class="tab-pane" id="tab-io">
-    {include file="modules/servers/powerdns_premium/templates/partials/_io.tpl"}
+    {include file="`$tplDir`partials/_io.tpl"}
   </div>
 
 </div>{* /tab-content *}

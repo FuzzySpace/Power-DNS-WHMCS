@@ -230,7 +230,8 @@ function powerdns_ClientAreaCustomButtonArray()
  */
 function powerdns_managedns(array $params)
 {
-    return ['success' => true];
+    // No-op: WHMCS calls ClientArea() after this; returning nothing
+    // ensures the module content renders without a success banner.
 }
 
 /**
