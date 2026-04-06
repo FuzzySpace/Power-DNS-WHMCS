@@ -1,6 +1,6 @@
-{* PowerDNS – Service Overview Page
-   Shown by default when a client visits their DNS hosting service.
-   From here they navigate to the full DNS manager.
+{* PowerDNS – Service Overview
+   Default view shown when a client visits their DNS service page.
+   Navigation to the DNS manager uses a plain GET link (?view=managedns).
 *}
 
 <div class="pdns-overview">
@@ -22,9 +22,9 @@
         <span class="text-muted"><i class="fa fa-list-ul"></i> {$recordCount} record{if $recordCount != 1}s{/if}</span>
       </div>
     </div>
-    <button type="submit" form="pdns-goto-form" class="btn btn-primary btn-lg pdns-manage-btn">
+    <a href="{$manageUrl|escape}" class="btn btn-primary btn-lg pdns-manage-btn">
       <i class="fa fa-pencil-square-o"></i>&nbsp; Manage DNS Records
-    </button>
+    </a>
   </div>
 
   {* ── Nameservers ─────────────────────────────────────────────────────── *}
@@ -39,10 +39,10 @@
       </p>
       {foreach from=$nameservers item=ns name=nsloop}
         <div class="pdns-ns-row">
-          <span class="pdns-ns-label">NS {$nsloop.iteration}</span>
-          <code id="pdns-ns-{$nsloop.index}">{$ns|escape}</code>
+          <span class="pdns-ns-label">NS {$smarty.foreach.nsloop.iteration}</span>
+          <code id="pdns-ns-{$smarty.foreach.nsloop.index}">{$ns|escape}</code>
           <button type="button" class="btn btn-xs btn-default pdns-copy-btn"
-                  data-target="pdns-ns-{$nsloop.index}">
+                  data-target="pdns-ns-{$smarty.foreach.nsloop.index}">
             <i class="fa fa-copy"></i> Copy
           </button>
         </div>
@@ -58,9 +58,9 @@
           <i class="fa fa-list fa-3x text-primary" style="margin-bottom:10px;"></i>
           <h4>{$recordCount}</h4>
           <p class="text-muted">Active Records</p>
-          <button type="submit" form="pdns-goto-form" class="btn btn-primary btn-block">
+          <a href="{$manageUrl|escape}" class="btn btn-primary btn-block">
             <i class="fa fa-pencil-square-o"></i> Manage Records
-          </button>
+          </a>
         </div>
       </div>
     </div>
@@ -70,9 +70,9 @@
           <i class="fa fa-envelope fa-3x text-warning" style="margin-bottom:10px;"></i>
           <h4>Email Setup</h4>
           <p class="text-muted">Add MX &amp; SPF records</p>
-          <button type="submit" form="pdns-goto-form" class="btn btn-default btn-block">
+          <a href="{$manageUrl|escape}" class="btn btn-default btn-block">
             <i class="fa fa-arrow-right"></i> Go to Records
-          </button>
+          </a>
         </div>
       </div>
     </div>
@@ -82,34 +82,21 @@
           <i class="fa fa-globe fa-3x text-info" style="margin-bottom:10px;"></i>
           <h4>Web Hosting</h4>
           <p class="text-muted">Add A &amp; CNAME records</p>
-          <button type="submit" form="pdns-goto-form" class="btn btn-default btn-block">
+          <a href="{$manageUrl|escape}" class="btn btn-default btn-block">
             <i class="fa fa-arrow-right"></i> Go to Records
-          </button>
+          </a>
         </div>
       </div>
     </div>
   </div>
 
-  {* Shared form used by all "go to manager" buttons via form="pdns-goto-form" *}
-  <form id="pdns-goto-form" method="post" action="" style="display:none;">
-    {csrf_token}
-    <input type="hidden" name="powerdns_goto" value="managedns">
-  </form>
-
 </div>{* /pdns-overview *}
 
 <style>
   .pdns-overview-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 24px;
-    padding: 20px;
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 6px;
+    display:flex; align-items:center; justify-content:space-between;
+    flex-wrap:wrap; gap:16px; margin-bottom:24px;
+    padding:20px; background:#f8f9fa; border:1px solid #ddd; border-radius:6px;
   }
   .pdns-overview-zone  { display:flex; align-items:center; gap:16px; }
   .pdns-zone-icon      { color:#337ab7; }
@@ -119,7 +106,7 @@
   .pdns-ns-row:last-child { margin-bottom:0; }
   .pdns-ns-label       { display:inline-block; width:32px; font-weight:700; color:#666; font-size:12px; }
   .pdns-ns-row code    { font-size:14px; flex:1; }
-  .pdns-card           { border-top: 3px solid #337ab7; }
+  .pdns-card           { border-top:3px solid #337ab7; }
   .pdns-card-row       { margin-top:8px; }
 </style>
 

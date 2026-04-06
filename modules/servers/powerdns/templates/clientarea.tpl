@@ -5,6 +5,13 @@
 
 <div class="powerdns-manager" id="pdns-manager">
 
+  {* ── Back to overview ───────────────────────────────────────────────── *}
+  <p style="margin-bottom:16px;">
+    <a href="{$serviceUrl|escape}" class="btn btn-default btn-sm">
+      <i class="fa fa-arrow-left"></i> Back to Zone Overview
+    </a>
+  </p>
+
   {* ── Zone / Nameserver info ─────────────────────────────────────────── *}
   <div class="panel panel-info">
     <div class="panel-heading">

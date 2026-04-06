@@ -213,8 +213,9 @@ function powerdns_TerminateAccount(array $params)
 // ---------------------------------------------------------------------------
 
 /**
- * Adds "Manage DNS Records" to the service actions sidebar in the WHMCS
- * client area.  Clicking it calls powerdns_managedns() then ClientArea().
+ * Adds "Manage DNS Records" to the WHMCS service actions sidebar.
+ * Clicking it triggers powerdns_managedns() which redirects to the
+ * manager view via GET parameter (avoids the modop=custom blank page).
  */
 function powerdns_ClientAreaCustomButtonArray()
 {
@@ -224,24 +225,23 @@ function powerdns_ClientAreaCustomButtonArray()
 }
 
 /**
- * Handler for the "Manage DNS Records" custom button click.
- * WHMCS requires this function to exist (named <module>_<action>).
- * After it returns, WHMCS calls ClientArea() which renders the page.
+ * Sidebar button handler. Redirects to ?view=managedns on the same
+ * service page so ClientArea() renders normally (not in modop=custom mode).
  */
 function powerdns_managedns(array $params)
 {
-    // No-op: WHMCS calls ClientArea() after this; returning nothing
-    // ensures the module content renders without a success banner.
+    $url = 'clientarea.php?action=productdetails&id=' . (int) $params['serviceid'] . '&view=managedns';
+    header('Location: ' . $url, true, 302);
+    exit;
 }
 
 /**
- * Return the template and variables for the client-facing DNS manager.
- * Shows nameserver info and the full record manager on one page — no
- * routing or navigation required.
+ * Return the template and variables for the client-facing area.
+ * Default view: zone overview (nameservers, record count, quick cards).
+ * With ?view=managedns: full DNS record manager.
  */
 function powerdns_ClientArea(array $params)
 {
-    // Guard: only active services may use the manager
     if ($params['status'] !== 'Active') {
         return [
             'templatefile' => 'inactive',
@@ -252,12 +252,51 @@ function powerdns_ClientArea(array $params)
     $zone        = _powerdns_zoneName($params);
     $serviceId   = $params['serviceid'];
     $nameservers = _powerdns_nameservers($params);
-    $error       = '';
-    $success     = '';
-    $api         = _powerdns_getClient($params);
-    $defaultTTL  = (int) ($params['configoption4'] ?: 300);
+    $serviceUrl  = 'clientarea.php?action=productdetails&id=' . $serviceId;
+    $manageUrl   = $serviceUrl . '&view=managedns';
 
-    // Handle non-AJAX form submissions (fallback when JS unavailable)
+    // Route: show manager when ?view=managedns is in URL or WHMCS customaction
+    $view = $_GET['view'] ?? ($params['customaction'] ?? '');
+    $showManager = ($view === 'managedns')
+                || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['powerdns_action']));
+
+    // ── Overview page ──────────────────────────────────────────────────────
+    if (!$showManager) {
+        $recordCount = 0;
+        $zoneError   = '';
+        try {
+            $api     = _powerdns_getClient($params);
+            $records = $api->getRecords($zone, ['A', 'AAAA', 'MX', 'TXT', 'SRV']);
+            foreach ($records as $rr) {
+                foreach ($rr['records'] as $r) {
+                    if (!($r['disabled'] ?? false)) {
+                        $recordCount++;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $zoneError = $e->getMessage();
+        }
+        return [
+            'templatefile' => 'overview',
+            'vars' => [
+                'zone'        => $zone,
+                'nameservers' => $nameservers,
+                'recordCount' => $recordCount,
+                'serviceId'   => $serviceId,
+                'manageUrl'   => $manageUrl,
+                'error'       => $zoneError,
+            ],
+        ];
+    }
+
+    // ── DNS Manager page ───────────────────────────────────────────────────
+    $api        = _powerdns_getClient($params);
+    $defaultTTL = (int) ($params['configoption4'] ?: 300);
+    $error      = '';
+    $success    = '';
+
+    // Non-AJAX form submission fallback
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['powerdns_action'])) {
         check_token('WHMCS.clientarea');
         $action = $_POST['powerdns_action'];
@@ -287,13 +326,13 @@ function powerdns_ClientArea(array $params)
         }
     }
 
-    // Fetch current records for display
+    // Fetch current records
     $flatRecords = [];
     try {
         $records = $api->getRecords($zone, ['A', 'AAAA', 'MX', 'TXT', 'SRV']);
         foreach ($records as $rrset) {
             foreach ($rrset['records'] as $record) {
-                if ($record['disabled']) {
+                if ($record['disabled'] ?? false) {
                     continue;
                 }
                 $flatRecords[] = [
@@ -316,6 +355,7 @@ function powerdns_ClientArea(array $params)
             'records'     => $flatRecords,
             'defaultTTL'  => $defaultTTL,
             'serviceId'   => $serviceId,
+            'serviceUrl'  => $serviceUrl,
             'error'       => $error,
             'success'     => $success,
         ],

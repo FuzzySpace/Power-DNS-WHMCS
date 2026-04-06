@@ -335,12 +335,14 @@ function powerdns_premium_ClientAreaCustomButtonArray()
 }
 
 /**
- * Handler for the "Manage DNS Records" custom button click.
- * WHMCS requires this function to exist (named <module>_<action>).
+ * Sidebar button handler. Redirects to ?view=managedns so the page
+ * renders normally (not in modop=custom mode which hides module content).
  */
 function powerdns_premium_managedns(array $params)
 {
-    // No-op: WHMCS calls ClientArea() after this.
+    $url = 'clientarea.php?action=productdetails&id=' . (int) $params['serviceid'] . '&view=managedns';
+    header('Location: ' . $url, true, 302);
+    exit;
 }
 
 function powerdns_premium_ClientArea(array $params)
@@ -354,9 +356,46 @@ function powerdns_premium_ClientArea(array $params)
 
     $zone        = _pdns_p_zone($params);
     $serviceId   = $params['serviceid'];
+    $serviceUrl  = 'clientarea.php?action=productdetails&id=' . $serviceId;
+    $manageUrl   = $serviceUrl . '&view=managedns';
     $license     = _pdns_p_license($params);
     $licensed    = $license->isValid();
     $nameservers = _pdns_p_ns($params);
+
+    // Route: overview vs manager
+    $view        = $_GET['view'] ?? ($params['customaction'] ?? '');
+    $showManager = ($view === 'managedns')
+                || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pdns_action']));
+
+    if (!$showManager) {
+        $recordCount = 0;
+        $zoneError   = '';
+        try {
+            $rrs = _pdns_p_getClient($params)->getRecords($zone, PowerDNSAPI::$SUPPORTED_TYPES);
+            foreach ($rrs as $rr) {
+                foreach ($rr['records'] as $r) {
+                    if (!($r['disabled'] ?? false)) {
+                        $recordCount++;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $zoneError = $e->getMessage();
+        }
+        return [
+            'templatefile' => 'overview',
+            'vars' => [
+                'zone'        => $zone,
+                'nameservers' => $nameservers,
+                'recordCount' => $recordCount,
+                'allowDNSSEC' => _pdns_p_allowDNSSEC($params),
+                'serviceId'   => $serviceId,
+                'manageUrl'   => $manageUrl,
+                'licensed'    => $licensed,
+                'error'       => $zoneError,
+            ],
+        ];
+    }
 
     $api        = _pdns_p_getClient($params);
     $defaultTTL = (int) ($params['configoption4'] ?: 300);
@@ -504,6 +543,7 @@ function powerdns_premium_ClientArea(array $params)
             'auditEntries'  => $auditEntries,
             'auditTotal'    => $auditTotal,
             'licensed'      => $licensed,
+            'serviceUrl'    => $serviceUrl,
             'error'         => $error,
             'success'       => $success,
             'tplDir'        => __DIR__ . '/templates/',
