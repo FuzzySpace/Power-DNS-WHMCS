@@ -414,6 +414,13 @@ class PowerDNSAPI
 
         if ($httpCode >= 400) {
             $msg = isset($decoded['error']) ? $decoded['error'] : $response;
+            if ($httpCode === 404 && strpos($this->serverId, '.') !== false) {
+                $msg .= ' — Hint: "PowerDNS Server ID" is usually "localhost", not a hostname.';
+            } elseif ($httpCode === 401 || $httpCode === 403) {
+                $msg .= ' — Check that the API Key in the server configuration is correct.';
+            } elseif ($httpCode === 0) {
+                $msg = "Could not connect to PowerDNS API at {$this->baseUrl}. Check the hostname and port.";
+            }
             throw new RuntimeException("PowerDNS API error {$httpCode}: {$msg}");
         }
 

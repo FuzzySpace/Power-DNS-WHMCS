@@ -33,9 +33,9 @@
         {/if}
       </div>
     </div>
-    <a href="{$manageUrl|escape}" class="btn btn-primary btn-lg pdns-manage-btn">
+    <button type="submit" form="pdns-p-goto-form" class="btn btn-primary btn-lg pdns-manage-btn">
       <i class="fa fa-pencil-square-o"></i>&nbsp; Manage DNS Records
-    </a>
+    </button>
   </div>
 
   {* ── Nameservers ─────────────────────────────────────────────────────── *}
@@ -69,9 +69,9 @@
           <i class="fa fa-list fa-3x text-primary" style="margin-bottom:10px;"></i>
           <h4>{$recordCount}</h4>
           <p class="text-muted">Active Records</p>
-          <a href="{$manageUrl|escape}" class="btn btn-primary btn-block">
+          <button type="submit" form="pdns-p-goto-form" class="btn btn-primary btn-block">
             <i class="fa fa-pencil-square-o"></i> Manage Records
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -81,9 +81,9 @@
           <i class="fa fa-envelope fa-3x text-warning" style="margin-bottom:10px;"></i>
           <h4>Email Setup</h4>
           <p class="text-muted">MX, SPF &amp; DKIM records</p>
-          <a href="{$manageUrl|escape}#tab-records" class="btn btn-default btn-block">
+          <button type="submit" form="pdns-p-goto-form" class="btn btn-default btn-block">
             <i class="fa fa-arrow-right"></i> Go to Records
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -94,9 +94,9 @@
           <i class="fa fa-lock fa-3x text-success" style="margin-bottom:10px;"></i>
           <h4>DNSSEC</h4>
           <p class="text-muted">Manage DNSSEC signing</p>
-          <a href="{$manageUrl|escape}#tab-dnssec" class="btn btn-default btn-block">
+          <button type="submit" form="pdns-p-goto-form" class="btn btn-default btn-block">
             <i class="fa fa-arrow-right"></i> DNSSEC Settings
-          </a>
+          </button>
         </div>
       </div>
       {else}
@@ -105,14 +105,20 @@
           <i class="fa fa-history fa-3x text-info" style="margin-bottom:10px;"></i>
           <h4>History</h4>
           <p class="text-muted">View your change log</p>
-          <a href="{$manageUrl|escape}#tab-history" class="btn btn-default btn-block">
+          <button type="submit" form="pdns-p-goto-form" class="btn btn-default btn-block">
             <i class="fa fa-arrow-right"></i> View History
-          </a>
+          </button>
         </div>
       </div>
       {/if}
     </div>
   </div>
+
+  {* Shared form used by all "go to manager" buttons *}
+  <form id="pdns-p-goto-form" method="post" action="" style="display:none;">
+    {csrf_token}
+    <input type="hidden" name="pdns_goto" value="managedns">
+  </form>
 
 </div>{* /pdns-overview *}
 

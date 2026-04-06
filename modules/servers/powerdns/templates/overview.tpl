@@ -22,9 +22,9 @@
         <span class="text-muted"><i class="fa fa-list-ul"></i> {$recordCount} record{if $recordCount != 1}s{/if}</span>
       </div>
     </div>
-    <a href="{$manageUrl|escape}" class="btn btn-primary btn-lg pdns-manage-btn">
+    <button type="submit" form="pdns-goto-form" class="btn btn-primary btn-lg pdns-manage-btn">
       <i class="fa fa-pencil-square-o"></i>&nbsp; Manage DNS Records
-    </a>
+    </button>
   </div>
 
   {* ── Nameservers ─────────────────────────────────────────────────────── *}
@@ -58,9 +58,9 @@
           <i class="fa fa-list fa-3x text-primary" style="margin-bottom:10px;"></i>
           <h4>{$recordCount}</h4>
           <p class="text-muted">Active Records</p>
-          <a href="{$manageUrl|escape}" class="btn btn-primary btn-block">
+          <button type="submit" form="pdns-goto-form" class="btn btn-primary btn-block">
             <i class="fa fa-pencil-square-o"></i> Manage Records
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -70,9 +70,9 @@
           <i class="fa fa-envelope fa-3x text-warning" style="margin-bottom:10px;"></i>
           <h4>Email Setup</h4>
           <p class="text-muted">Add MX &amp; SPF records</p>
-          <a href="{$manageUrl|escape}" class="btn btn-default btn-block">
+          <button type="submit" form="pdns-goto-form" class="btn btn-default btn-block">
             <i class="fa fa-arrow-right"></i> Go to Records
-          </a>
+          </button>
         </div>
       </div>
     </div>
@@ -82,13 +82,19 @@
           <i class="fa fa-globe fa-3x text-info" style="margin-bottom:10px;"></i>
           <h4>Web Hosting</h4>
           <p class="text-muted">Add A &amp; CNAME records</p>
-          <a href="{$manageUrl|escape}" class="btn btn-default btn-block">
+          <button type="submit" form="pdns-goto-form" class="btn btn-default btn-block">
             <i class="fa fa-arrow-right"></i> Go to Records
-          </a>
+          </button>
         </div>
       </div>
     </div>
   </div>
+
+  {* Shared form used by all "go to manager" buttons via form="pdns-goto-form" *}
+  <form id="pdns-goto-form" method="post" action="" style="display:none;">
+    {csrf_token}
+    <input type="hidden" name="powerdns_goto" value="managedns">
+  </form>
 
 </div>{* /pdns-overview *}
 

@@ -75,7 +75,7 @@ function powerdns_ConfigOptions()
             'Type'        => 'text',
             'Size'        => 30,
             'Default'     => 'localhost',
-            'Description' => 'PowerDNS server identifier (usually "localhost")',
+            'Description' => 'PowerDNS internal server name. Almost always "localhost" — do NOT enter the hostname here.',
         ],
     ];
 }
@@ -101,12 +101,12 @@ function _powerdns_nameservers(array $params)
 {
     $ns = [];
     if (!empty($params['configoption1'])) {
-        $ns[] = rtrim(strtolower(trim($params['configoption1'])), '.') . '.';
+        $ns[] = rtrim(strtolower(trim($params['configoption1'])), '.');
     }
     if (!empty($params['configoption2'])) {
-        $ns[] = rtrim(strtolower(trim($params['configoption2'])), '.') . '.';
+        $ns[] = rtrim(strtolower(trim($params['configoption2'])), '.');
     }
-    return $ns ?: ['ns1.example.com.', 'ns2.example.com.'];
+    return $ns ?: ['ns1.example.com', 'ns2.example.com'];
 }
 
 function _powerdns_zoneName(array $params)
@@ -253,6 +253,7 @@ function powerdns_ClientArea(array $params)
     // -------------------------------------------------------------------
     $view = $params['customaction'] ?? ($_GET['view'] ?? '');
     $showManager = ($view === 'managedns')
+                || !empty($_POST['powerdns_goto'])
                 || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['powerdns_action']));
 
     if (!$showManager) {

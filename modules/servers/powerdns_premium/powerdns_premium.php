@@ -92,7 +92,7 @@ function powerdns_premium_ConfigOptions()
             'Type'        => 'text',
             'Size'        => 30,
             'Default'     => 'localhost',
-            'Description' => 'PowerDNS server identifier (usually "localhost")',
+            'Description' => 'PowerDNS internal server name. Almost always "localhost" — do NOT enter the hostname here.',
         ],
         'Max Records Per Zone' => [
             'Type'        => 'text',
@@ -152,10 +152,10 @@ function _pdns_p_toAsciiDomain($domain)
 function _pdns_p_ns(array $params)
 {
     $ns = array_filter([
-        rtrim(strtolower(trim($params['configoption1'] ?? '')), '.') . '.',
-        rtrim(strtolower(trim($params['configoption2'] ?? '')), '.') . '.',
+        rtrim(strtolower(trim($params['configoption1'] ?? '')), '.'),
+        rtrim(strtolower(trim($params['configoption2'] ?? '')), '.'),
     ]);
-    return $ns ?: ['ns1.example.com.', 'ns2.example.com.'];
+    return $ns ?: ['ns1.example.com', 'ns2.example.com'];
 }
 
 function _pdns_p_maxRecords(array $params)
@@ -366,6 +366,7 @@ function powerdns_premium_ClientArea(array $params)
     // ------------------------------------------------------------------
     $view        = $params['customaction'] ?? ($_GET['view'] ?? '');
     $showManager = ($view === 'managedns')
+                || !empty($_POST['pdns_goto'])
                 || ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['pdns_action']));
 
     if (!$showManager) {
