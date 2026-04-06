@@ -301,12 +301,13 @@ function powerdns_ClientArea(array $params)
     return [
         'templatefile' => 'clientarea',
         'vars'         => [
-            'zone'       => $zone,
-            'records'    => $flatRecords,
-            'defaultTTL' => $defaultTTL,
-            'serviceId'  => $serviceId,
-            'error'      => $error,
-            'success'    => $success,
+            'zone'        => $zone,
+            'nameservers' => _powerdns_nameservers($params),
+            'records'     => $flatRecords,
+            'defaultTTL'  => $defaultTTL,
+            'serviceId'   => $serviceId,
+            'error'       => $error,
+            'success'     => $success,
         ],
     ];
 }
@@ -410,3 +411,9 @@ function powerdns_TestConnection(array $params)
     }
     return ['success' => true, 'error' => ''];
 }
+
+
+// ---------------------------------------------------------------------------
+// Register hooks (idempotent – safe even if WHMCS already auto-loaded the file)
+// ---------------------------------------------------------------------------
+require_once __DIR__ . '/hooks.php';

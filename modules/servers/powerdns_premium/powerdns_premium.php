@@ -604,3 +604,9 @@ function _pdns_p_sendEmail($templateName, array $params)
         // Non-fatal: template may not exist yet
     }
 }
+
+
+// ---------------------------------------------------------------------------
+// Register hooks (idempotent – safe even if WHMCS already auto-loaded the file)
+// ---------------------------------------------------------------------------
+require_once __DIR__ . '/hooks.php';

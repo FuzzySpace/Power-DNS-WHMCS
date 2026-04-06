@@ -2,8 +2,8 @@
 <form id="pdns-add-form" method="post" action="" novalidate>
   {csrf_token}
   <input type="hidden" name="pdns_action"  value="add_record">
-  <input type="hidden" name="pdns_p_ajax"  value="1">
   <input type="hidden" name="service_id"   value="{$serviceId|escape}">
+  {* pdns_p_ajax added by JS so plain form-submit falls through to ClientArea() *}
 
   <div class="row">
     <div class="col-sm-3">

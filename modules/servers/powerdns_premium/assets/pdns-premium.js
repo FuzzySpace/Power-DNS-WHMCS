@@ -165,6 +165,7 @@
       spinner.style.display = '';
 
       var fd = new FormData(form);
+      fd.append('pdns_p_ajax', '1'); // flag as AJAX (not in static HTML)
 
       fetch(window.location.href, { method: 'POST', body: fd, credentials: 'same-origin' })
         .then(function (r) { return r.json(); })

@@ -3,6 +3,29 @@
 
 <div class="powerdns-manager" id="pdns-manager">
 
+  {* ------------------------------------------------------------------ *}
+  {* Nameserver callout – shown so the client knows where to point      *}
+  {* their domain delegation                                             *}
+  {* ------------------------------------------------------------------ *}
+  {if $nameservers}
+  <div class="panel panel-info pdns-ns-callout">
+    <div class="panel-heading">
+      <i class="fa fa-server"></i> <strong>Point your domain to these nameservers</strong>
+    </div>
+    <div class="panel-body">
+      {foreach from=$nameservers item=ns name=ns_loop}
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:{if $ns_loop.last}0{else}6px{/if};">
+        <code id="pdns-ns-{$ns_loop.index}">{$ns|escape}</code>
+        <button type="button" class="btn btn-xs btn-default pdns-copy-btn"
+                data-target="pdns-ns-{$ns_loop.index}">
+          <i class="fa fa-copy"></i> Copy
+        </button>
+      </div>
+      {/foreach}
+    </div>
+  </div>
+  {/if}
+
   <div class="panel panel-default">
     <div class="panel-heading">
       <h3 class="panel-title">
@@ -49,8 +72,9 @@
       <form method="post" action="" id="pdns-add-form" novalidate>
         {csrf_token}
         <input type="hidden" name="powerdns_action" value="add_record">
-        <input type="hidden" name="powerdns_ajax"   value="1">
         <input type="hidden" name="service_id"      value="{$serviceId|escape}">
+        {* powerdns_ajax is added dynamically by JS so plain form-submit falls through *}
+        {* to ClientArea() for a proper page reload rather than seeing raw JSON.        *}
 
         <div class="form-group">
           <label for="record_type">Record Type</label>
@@ -197,6 +221,22 @@
   "use strict";
 
   /* ---------------------------------------------------------------- */
+  /* Copy-to-clipboard for nameserver buttons                         */
+  /* ---------------------------------------------------------------- */
+  document.querySelectorAll('.pdns-copy-btn').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id   = btn.getAttribute('data-target');
+      var text = document.getElementById(id) ? document.getElementById(id).innerText : '';
+      if (navigator.clipboard && text) {
+        navigator.clipboard.writeText(text).then(function () {
+          btn.innerHTML = '<i class="fa fa-check"></i> Copied!';
+          setTimeout(function () { btn.innerHTML = '<i class="fa fa-copy"></i> Copy'; }, 2000);
+        });
+      }
+    });
+  });
+
+  /* ---------------------------------------------------------------- */
   /* Record type field toggling                                        */
   /* ---------------------------------------------------------------- */
   function pdnsShowFields(type) {
@@ -314,6 +354,7 @@
       spinner.style.display = '';
 
       var fd = new FormData(addForm);
+      fd.append('powerdns_ajax', '1'); // flag the request as AJAX (not in static HTML)
 
       fetch(window.location.href, {
         method:      'POST',

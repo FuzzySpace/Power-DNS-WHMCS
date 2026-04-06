@@ -17,6 +17,13 @@ if (!defined('WHMCS')) {
     die('This file cannot be accessed directly');
 }
 
+// Guard: prevents double-registration when WHMCS auto-loads this file and
+// powerdns_premium.php also require_once's it.
+if (defined('PDNS_P_HOOKS_LOADED')) {
+    return;
+}
+define('PDNS_P_HOOKS_LOADED', true);
+
 use WHMCS\Database\Capsule;
 
 $_pdns_p_moduleDir = dirname(__FILE__);
@@ -105,12 +112,29 @@ add_hook('ClientAreaPage', 1, function ($vars) {
                 $type    = strtoupper(trim($_POST['record_type'] ?? ''));
                 $name    = trim($_POST['record_name'] ?? '');
                 $ttl     = max(60, (int) ($_POST['record_ttl'] ?? $defaultTTL));
-                $content = _pdns_p_hooks_buildContent($type, $_POST);
+
+                // Normalize zone-apex shorthands
+                if ($name === '@') {
+                    $name = '';
+                }
+
+                $content  = _pdns_p_hooks_buildContent($type, $_POST);
                 $api->addRecord($zone, $name ?: $zone, $type, $content, $ttl);
                 AuditLog::write($serviceId, $userId, AuditLog::ACTION_ADD, $name ?: $zone, $type, $content, $ttl);
+
+                // Compute the FQDN the same way PowerDNS stores it
+                $zoneRoot = rtrim($zone, '.') . '.';
+                if ($name === '') {
+                    $fqdnName = $zoneRoot;
+                } elseif (strpos($name, '.') === false) {
+                    $fqdnName = $name . '.' . $zoneRoot;
+                } else {
+                    $fqdnName = rtrim($name, '.') . '.';
+                }
+
                 echo json_encode([
                     'success' => true,
-                    'record'  => ['name' => ($name ?: $zone) . '.', 'type' => $type, 'ttl' => $ttl, 'content' => $content],
+                    'record'  => ['name' => $fqdnName, 'type' => $type, 'ttl' => $ttl, 'content' => $content],
                 ]);
                 break;
 

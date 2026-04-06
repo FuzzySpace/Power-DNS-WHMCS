@@ -18,6 +18,13 @@ if (!defined('WHMCS')) {
     die('This file cannot be accessed directly');
 }
 
+// Guard: prevents the hook from being registered twice when WHMCS auto-loads
+// this file AND powerdns.php also require_once's it.
+if (defined('PDNS_HOOKS_LOADED')) {
+    return;
+}
+define('PDNS_HOOKS_LOADED', true);
+
 use WHMCS\Database\Capsule;
 
 require_once __DIR__ . '/../../../modules/servers/powerdns/lib/PowerDNSAPI.php';
@@ -122,13 +129,28 @@ add_hook('ClientAreaPage', 1, function ($vars) {
                     throw new InvalidArgumentException("Unsupported record type: {$type}");
                 }
 
-                $content = _pdns_ajax_buildContent($type, $_POST);
+                // Normalize zone-apex shorthands before building content and FQDN
+                if ($name === '@') {
+                    $name = '';
+                }
+
+                $content  = _pdns_ajax_buildContent($type, $_POST);
                 $api->addRecord($zone, $name ?: $zone, $type, $content, $ttl, true);
+
+                // Compute the FQDN the same way PowerDNS stores it
+                $zoneRoot = rtrim($zone, '.') . '.';
+                if ($name === '') {
+                    $fqdnName = $zoneRoot;
+                } elseif (strpos($name, '.') === false) {
+                    $fqdnName = $name . '.' . $zoneRoot;
+                } else {
+                    $fqdnName = rtrim($name, '.') . '.';
+                }
 
                 echo json_encode([
                     'success' => true,
                     'record'  => [
-                        'name'    => ($name ?: $zone) . '.',
+                        'name'    => $fqdnName,
                         'type'    => $type,
                         'ttl'     => $ttl,
                         'content' => $content,
